@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio System - Poltekbang Jayapura</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom Animations */
+        .fade-in { animation: fadeIn 0.5s ease-in-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .spin-slow { animation: spin 4s linear infinite; }
+        .spin-paused { animation-play-state: paused; }
+        
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 font-sans antialiased overflow-x-hidden">
+
+    <!-- ================= VIEW 1: HOME ================= -->
+    <div id="home-view" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-slate-900 to-black relative">
+        <div class="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+            <div class="absolute top-10 left-10 text-9xl text-blue-500 transform -rotate-45 blur-sm"><i class="fas fa-plane"></i></div>
+            <div class="absolute bottom-10 right-10 text-9xl text-blue-300 transform rotate-12 blur-sm"><i class="fas fa-satellite-dish"></i></div>
+        </div>
+
+        <div class="z-10 text-center px-4 max-w-2xl">
+            <div class="mb-8 transform hover:scale-110 transition duration-500">
+                <div class="w-32 h-32 mx-auto bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.5)]">
+                    <i class="fas fa-plane-departure text-6xl text-white"></i>
+                </div>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">Sistem Kontrol Audio Terpusat</h1>
+            <p class="text-xl text-blue-200 mb-12 font-light">Politeknik Penerbangan Jayapura</p>
+            
+            <button id="btnEnterDashboard" class="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white bg-blue-600 rounded-full overflow-hidden transition-all duration-300 hover:bg-blue-500 hover:shadow-[0_0_30px_rgba(59,130,246,0.8)] focus:outline-none focus:ring-4 focus:ring-blue-300">
+                <span class="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black"></span>
+                <span class="relative flex items-center gap-3 text-lg">
+                    Masuk Dashboard Operator <i class="fas fa-arrow-right transform group-hover:translate-x-2 transition-transform"></i>
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= VIEW 2: DASHBOARD UTAMA ================= -->
+    <div id="dashboard-view" class="hidden min-h-screen flex-col fade-in">
+        
+        <!-- Navbar -->
+        <nav class="bg-slate-950 border-b border-slate-800 shadow-lg sticky top-0 z-50">
+            <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-wave-square text-blue-500 text-2xl"></i>
+                        <span class="font-bold text-lg text-white">Poltekbang Audio System</span>
+                    </div>
+                    <div>
+                        <button id="btnLogout" class="text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-red-600/90 px-4 py-2 rounded-lg transition-colors border border-slate-700 hover:border-red-500 flex items-center gap-2">
+                            <i class="fas fa-sign-out-alt"></i> Keluar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 max-w-screen-2xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            
+            <!-- Grid Atas: Info Operator, Timer, Jadwal -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Info Operator -->
+                <div id="cardOperator" class="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg flex items-center gap-5 relative overflow-hidden cursor-pointer hover:border-blue-500 hover:bg-slate-750 transition transform hover:-translate-y-1 group">
+                    <div class="absolute right-0 top-0 w-24 h-24 bg-blue-500/10 rounded-full blur-xl transform translate-x-1/2 -translate-y-1/2"></div>
+                    <div class="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center text-blue-400 text-3xl shrink-0 border border-slate-600 shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-colors overflow-hidden">
+                        <img id="dashboardAvatarImg" src="" alt="Foto" class="w-full h-full object-cover hidden">
+                        <i id="dashboardAvatarIcon" class="fas fa-user-astronaut"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Operator Aktif</p>
+                            <span class="text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 font-medium">Buka Profil <i class="fas fa-chevron-right"></i></span>
+                        </div>
+                        <h2 class="text-xl font-bold text-white group-hover:text-blue-300 transition-colors">Taruna Remaja Kristovel</h2>
+                        <p class="text-blue-400 text-sm mt-1"><i class="fas fa-id-badge mr-1"></i> NIT: 650422503</p>
+                    </div>
+                </div>
+
+                <!-- Timer / Stopwatch -->
+                <div id="timerBox" class="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg flex flex-col justify-center items-center text-center transition-colors">
+                    <div class="flex items-center gap-2 mb-2">
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Timer Kegiatan</p>
+                        <span id="timerStatusBadge" class="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] px-2 py-0.5 rounded font-bold">Mati (Audio Terkunci)</span>
+                    </div>
+                    <div id="displayTimer" class="font-mono text-4xl lg:text-5xl font-bold text-white tracking-widest mb-4 drop-shadow-md">00:00:00</div>
+                    <div class="flex gap-2 w-full justify-center">
+                        <button id="btnStart" class="flex-1 max-w-[100px] bg-emerald-600 hover:bg-emerald-500 text-white text-sm py-2 rounded-lg font-medium transition-colors shadow"><i class="fas fa-play"></i> Start</button>
+                        <button id="btnPause" class="flex-1 max-w-[100px] bg-amber-600 hover:bg-amber-500 text-white text-sm py-2 rounded-lg font-medium transition-colors shadow"><i class="fas fa-pause"></i> Pause</button>
+                        <button id="btnReset" class="flex-1 max-w-[100px] bg-slate-600 hover:bg-slate-500 text-white text-sm py-2 rounded-lg font-medium transition-colors shadow"><i class="fas fa-redo"></i> Reset</button>
+                    </div>
+                </div>
+
+                <!-- Jadwal Piket Harian -->
+                <div class="bg-slate-800 rounded-xl p-0 border border-slate-700 shadow-lg flex flex-col overflow-hidden">
+                    <div class="bg-slate-900/50 p-3 border-b border-slate-700 flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-slate-200"><i class="fas fa-calendar-alt text-blue-400 mr-2"></i> Jadwal Piket Harian</h3>
+                    </div>
+                    <div class="overflow-x-auto p-4">
+                        <table class="w-full text-xs text-left">
+                            <tbody class="divide-y divide-slate-700/50">
+                                <tr class="bg-slate-800/80">
+                                    <td class="py-3 px-2 font-bold text-blue-400 whitespace-nowrap">Senin</td>
+                                    <td class="py-3 px-2 text-slate-300 whitespace-nowrap">06:00 - Selesai</td>
+                                    <td class="py-3 px-2">Budi S. <span class="text-slate-500 text-[10px]">&amp;</span> Bpk. Hairudin</td>
+                                    <td class="py-3 px-2 text-right">
+                                        <span class="inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-[10px] font-bold border border-blue-500/30">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Aktif
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-2 font-bold text-slate-400 whitespace-nowrap">Jumat</td>
+                                    <td class="py-3 px-2 text-slate-400 whitespace-nowrap">06:00 - Selesai</td>
+                                    <td class="py-3 px-2 text-slate-400">Nisa L. <span class="text-slate-500 text-[10px]">&amp;</span> Ibu Rina</td>
+                                    <td class="py-3 px-2 text-right">
+                                        <span class="inline-flex bg-slate-700 text-slate-400 px-2 py-1 rounded text-[10px] font-bold border border-slate-600">Standby</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bagian Tengah: Audio Player Utama -->
+            <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-8 border border-slate-700 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
+                <audio id="mainAudioPlayer"></audio>
+                <div class="relative w-40 h-40 md:w-56 md:h-56 shrink-0 rounded-full border-4 border-slate-700 bg-slate-950 flex items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+                    <div id="vinylIcon" class="w-full h-full rounded-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-black text-slate-600 text-6xl spin-slow spin-paused">
+                        <i class="fas fa-compact-disc"></i>
+                        <div class="absolute w-12 h-12 bg-slate-900 rounded-full border-2 border-slate-700"></div>
+                    </div>
+                </div>
+
+                <div class="flex-1 w-full flex flex-col justify-center text-center md:text-left">
+                    <span id="playerStatus" class="text-xs font-bold text-red-400 uppercase tracking-widest mb-2"><i class="fas fa-lock mr-1"></i> Terkunci (Nyalakan Timer Dahulu)</span>
+                    <h2 id="playerTitle" class="text-2xl md:text-4xl font-bold text-white mb-2 line-clamp-1">Belum Ada Audio</h2>
+                    <p id="playerCategory" class="text-slate-400 text-sm mb-6">Tekan Start pada Timer Kegiatan untuk membuka kunci audio</p>
+
+                    <div class="flex items-center justify-center md:justify-start gap-4 mb-6">
+                        <button id="btnPrev" class="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 text-white flex items-center justify-center transition-colors"><i class="fas fa-step-backward"></i></button>
+                        <button id="btnPlayPause" class="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center text-xl shadow-[0_0_15px_rgba(37,99,235,0.5)] transition-transform transform hover:scale-105">
+                            <i id="playIcon" class="fas fa-play ml-1"></i>
+                        </button>
+                        <button id="btnStop" class="w-12 h-12 rounded-full bg-slate-700 hover:bg-red-600 hover:text-white text-slate-300 flex items-center justify-center transition-colors"><i class="fas fa-stop"></i></button>
+                        <button id="btnNext" class="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 text-white flex items-center justify-center transition-colors"><i class="fas fa-step-forward"></i></button>
+                    </div>
+
+                    <div class="flex items-center justify-center md:justify-start gap-3 w-full max-w-xs">
+                        <i class="fas fa-volume-down text-slate-400"></i>
+                        <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="0.8" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                        <i class="fas fa-volume-up text-slate-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bagian Bawah: Playlists Grid -->
+            <div>
+                <!-- Header Daftar Playlist & Tombol Buka Halaman Pengaturan Media -->
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 border-b border-slate-700 pb-3">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-list-ul text-blue-500"></i> Daftar Playlist Audio (Manual)
+                    </h3>
+                    
+                    <button id="btnOpenMediaPage" class="group relative inline-flex items-center justify-center px-6 py-2.5 font-bold text-white bg-purple-600 rounded-lg overflow-hidden transition-all duration-300 hover:bg-purple-500 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)]">
+                        <span class="flex items-center gap-2 text-sm">
+                            <i class="fas fa-folder-plus"></i> Kelola Media & Tambah Lagu
+                        </span>
+                    </button>
+                </div>
+                
+                <!-- Container Daftar Lagu yang Baru Ditambahkan -->
+                <div class="bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700 p-6 min-h-[150px]">
+                    <p id="emptyDashboardText" class="text-slate-500 text-sm text-center italic py-4">
+                        Daftar lagu masih kosong. <br>Klik tombol <b>"Kelola Media & Tambah Lagu"</b> di atas untuk mulai memasukkan lagu dari perangkat Anda.
+                    </p>
+                    
+                    <div id="dashboardTrackList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= VIEW 3: PROFIL OPERATOR ================= -->
+    <div id="profile-view" class="hidden min-h-screen flex-col fade-in">
+        <nav class="bg-slate-950 border-b border-slate-800 shadow-lg sticky top-0 z-50">
+            <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-id-card text-blue-500 text-2xl"></i>
+                        <span class="font-bold text-lg text-white">Profil Operator</span>
+                    </div>
+                    <div>
+                        <button class="btnBackToDashboard text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors border border-slate-700 flex items-center gap-2">
+                            <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
+            <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-900 to-slate-900 p-8 text-center relative">
+                    <div class="relative w-32 h-32 mx-auto mb-4 group">
+                        <div id="profileAvatarContainer" class="w-full h-full bg-slate-700 rounded-full flex items-center justify-center text-blue-400 text-5xl border-4 border-slate-600 shadow-xl overflow-hidden">
+                            <img id="profileImgPreview" src="" alt="Foto Profil" class="w-full h-full object-cover hidden">
+                            <i id="profileDefaultIcon" class="fas fa-user-astronaut"></i>
+                        </div>
+                        <label for="uploadPhotoInput" class="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white text-xs font-semibold">
+                            <i class="fas fa-camera text-xl mb-1"></i> Ganti Foto
+                        </label>
+                        <input type="file" id="uploadPhotoInput" accept="image/*" class="hidden">
+                    </div>
+                    <h2 class="text-3xl font-bold text-white">Taruna Remaja Kristovel</h2>
+                    <p class="text-blue-300 mt-1">Operator Ruang Kontrol Audio</p>
+                </div>
+
+                <div class="p-8 space-y-6">
+                    <h3 class="text-lg font-bold text-white border-b border-slate-700 pb-3 flex items-center gap-2">
+                        <i class="fas fa-info-circle text-blue-500"></i> Informasi Akademik & Tugas
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
+                            <span class="text-slate-400 block mb-1">Nomor Induk Taruna (NIT)</span>
+                            <span class="text-white font-semibold text-base">650422503</span>
+                        </div>
+                        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
+                            <span class="text-slate-400 block mb-1">Program Studi</span>
+                            <span class="text-white font-semibold text-base">Teknik Listrik Bandara (TLB)</span>
+                        </div>
+                    </div>
+                    <div class="pt-4 flex justify-between items-center">
+                        <button class="btnBackToDashboard bg-blue-600 hover:bg-blue-500 text-white font-medium px-6 py-2.5 rounded-xl transition-colors shadow ml-auto">
+                            Kembali ke Menu Utama
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= VIEW 4: HALAMAN KELOLA MEDIA (UPLOAD HUB) ================= -->
+    <div id="media-settings-view" class="hidden min-h-screen flex-col fade-in bg-slate-900">
+        <nav class="bg-slate-950 border-b border-slate-800 shadow-lg sticky top-0 z-50">
+            <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-folder-open text-purple-500 text-2xl"></i>
+                        <span class="font-bold text-lg text-white">Manajemen File Media</span>
+                    </div>
+                    <div>
+                        <button class="btnBackToDashboard text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-purple-600 px-4 py-2 rounded-lg transition-colors border border-slate-700 flex items-center gap-2">
+                            <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="flex-1 max-w-screen-xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
+            
+            <div class="mb-10 text-center max-w-2xl mx-auto">
+                <h2 class="text-3xl font-bold text-white mb-2">Upload Audio Baru</h2>
+                <p class="text-slate-400 text-sm">File audio yang Anda unggah dari sini akan otomatis masuk ke Daftar Playlist di halaman Dashboard.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                
+                <!-- Kotak 1: Tambah Lagu / Musik -->
+                <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden text-center p-8 transition transform hover:-translate-y-1 hover:border-emerald-500">
+                    <div class="w-20 h-20 mx-auto bg-emerald-900/50 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-music text-3xl text-emerald-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Lagu & Musik</h3>
+                    <p class="text-slate-400 text-sm mb-8">Gunakan ini untuk memasukkan lagu Indonesia Raya, Mengheningkan Cipta, Senam SKJ, atau lagu hiburan.</p>
+                    
+                    <label for="uploadCustomMusic" class="cursor-pointer inline-block w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition-colors">
+                        <i class="fas fa-upload mr-2"></i> Pilih File Audio (.mp3)
+                    </label>
+                    <input type="file" id="uploadCustomMusic" accept="audio/*" class="hidden">
+                </div>
+
+                <!-- Kotak 2: Tambah Pengumuman / Suara Lainnya -->
+                <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden text-center p-8 transition transform hover:-translate-y-1 hover:border-amber-500">
+                    <div class="w-20 h-20 mx-auto bg-amber-900/50 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-bullhorn text-3xl text-amber-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Sirine & Pengumuman</h3>
+                    <p class="text-slate-400 text-sm mb-8">Gunakan ini untuk memasukkan efek suara, sirine peringatan, bel apel, atau suara pengumuman lainnya.</p>
+                    
+                    <label for="uploadCustomVoice" class="cursor-pointer inline-block w-full bg-amber-600 hover:bg-amber-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition-colors">
+                        <i class="fas fa-upload mr-2"></i> Pilih File Suara (.mp3)
+                    </label>
+                    <input type="file" id="uploadCustomVoice" accept="audio/*" class="hidden">
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- VIEW MANAGEMENT LOGIC ---
+        const homeView = document.getElementById('home-view');
+        const dashboardView = document.getElementById('dashboard-view');
+        const profileView = document.getElementById('profile-view');
+        const mediaSettingsView = document.getElementById('media-settings-view');
+        
+        function hideAllViews() {
+            homeView.classList.add('hidden');
+            dashboardView.classList.add('hidden');
+            profileView.classList.add('hidden');
+            mediaSettingsView.classList.add('hidden');
+            window.scrollTo(0,0);
+        }
+
+        function showDashboard() {
+            hideAllViews();
+            dashboardView.classList.remove('hidden');
+        }
+
+        document.getElementById('btnEnterDashboard').addEventListener('click', showDashboard);
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            hideAllViews(); homeView.classList.remove('hidden'); 
+            pauseTimer(); // Otomatis matikan timer & audio saat keluar
+        });
+        document.getElementById('cardOperator').addEventListener('click', () => {
+            hideAllViews(); profileView.classList.remove('hidden');
+        });
+        document.getElementById('btnOpenMediaPage').addEventListener('click', () => {
+            hideAllViews(); mediaSettingsView.classList.remove('hidden');
+        });
+
+        const backButtons = document.querySelectorAll('.btnBackToDashboard');
+        backButtons.forEach(btn => btn.addEventListener('click', showDashboard));
+
+        // --- UPLOAD FOTO PROFIL LOGIC ---
+        document.getElementById('uploadPhotoInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+                    document.getElementById('profileImgPreview').src = imageUrl;
+                    document.getElementById('profileImgPreview').classList.remove('hidden');
+                    document.getElementById('profileDefaultIcon').classList.add('hidden');
+                    document.getElementById('dashboardAvatarImg').src = imageUrl;
+                    document.getElementById('dashboardAvatarImg').classList.remove('hidden');
+                    document.getElementById('dashboardAvatarIcon').classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // --- TIMER & AUDIO LOCK LOGIC ---
+        let timerInterval = null;
+        let elapsedTime = 0;
+        let isTimerRunning = false; // Penanda status timer
+        
+        const displayTimer = document.getElementById('displayTimer');
+        const timerStatusBadge = document.getElementById('timerStatusBadge');
+        const timerBox = document.getElementById('timerBox');
+
+        function updateTimerDisplay() {
+            const h = String(Math.floor(elapsedTime / 3600)).padStart(2, '0');
+            const m = String(Math.floor((elapsedTime % 3600) / 60)).padStart(2, '0');
+            const s = String(elapsedTime % 60).padStart(2, '0');
+            displayTimer.textContent = `${h}:${m}:${s}`;
+        }
+
+        function checkTimerGuard() {
+            if (!isTimerRunning) {
+                alert("⚠️ Peringatan: Silakan nyalakan TIMER KEGIATAN (tekan tombol Start) terlebih dahulu sebelum memutar audio!");
+                // Beri efek kedip merah pada kotak timer agar operator langsung sadar
+                timerBox.classList.add('border-red-500', 'ring-2', 'ring-red-500/50');
+                setTimeout(() => {
+                    timerBox.classList.remove('border-red-500', 'ring-2', 'ring-red-500/50');
+                }, 1500);
+                return false;
+            }
+            return true;
+        }
+
+        function startTimer() {
+            if (!timerInterval) {
+                isTimerRunning = true;
+                timerStatusBadge.textContent = "Aktif (Audio Siap)";
+                timerStatusBadge.className = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded font-bold animate-pulse";
+                
+                if (audio.paused && !audio.src) {
+                    playerStatus.innerHTML = '<i class="fas fa-check-circle mr-1"></i> Siap Memutar';
+                    playerStatus.className = 'text-xs font-bold text-blue-400 uppercase tracking-widest mb-2';
+                }
+
+                timerInterval = setInterval(() => { 
+                    elapsedTime++; 
+                    updateTimerDisplay(); 
+                }, 1000);
+            }
+        }
+
+        function pauseTimer() {
+            clearInterval(timerInterval); 
+            timerInterval = null;
+            isTimerRunning = false;
+            timerStatusBadge.textContent = "Dijeda (Audio Terkunci)";
+            timerStatusBadge.className = "bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded font-bold";
+            
+            // Otomatis menjeda lagu jika timer di-pause
+            if (!audio.paused) {
+                audio.pause();
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval); 
+            timerInterval = null; 
+            isTimerRunning = false;
+            elapsedTime = 0; 
+            updateTimerDisplay();
+            
+            timerStatusBadge.textContent = "Mati (Audio Terkunci)";
+            timerStatusBadge.className = "bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] px-2 py-0.5 rounded font-bold";
+            
+            // Otomatis menghentikan total lagu jika timer di-reset
+            stopAudio();
+        }
+
+        document.getElementById('btnStart').addEventListener('click', startTimer);
+        document.getElementById('btnPause').addEventListener('click', pauseTimer);
+        document.getElementById('btnReset').addEventListener('click', resetTimer);
+
+        // --- AUDIO PLAYER & TRACK MANAGEMENT LOGIC ---
+        const audio = document.getElementById('mainAudioPlayer');
+        const playPauseBtn = document.getElementById('btnPlayPause');
+        const stopBtn = document.getElementById('btnStop');
+        const playIcon = document.getElementById('playIcon');
+        const volumeControl = document.getElementById('volumeControl');
+        
+        const playerTitle = document.getElementById('playerTitle');
+        const playerCategory = document.getElementById('playerCategory');
+        const playerStatus = document.getElementById('playerStatus');
+        const vinylIcon = document.getElementById('vinylIcon');
+        
+        let trackBtns = []; 
+        let currentTrackIndex = -1;
+
+        audio.volume = volumeControl.value;
+        volumeControl.addEventListener('input', (e) => { audio.volume = e.target.value; });
+
+        function loadAndPlayTrack(index) {
+            // Cek apakah timer sudah nyala!
+            if (!checkTimerGuard()) return;
+
+            if(index < 0 || index >= trackBtns.length) return;
+            
+            trackBtns.forEach(btn => {
+                btn.classList.remove('bg-blue-600/30', 'border-blue-500');
+                btn.classList.add('bg-slate-900/60', 'border-slate-700');
+            });
+            
+            currentTrackIndex = index;
+            const btn = trackBtns[index];
+            const src = btn.getAttribute('data-src');
+            const title = btn.getAttribute('data-title');
+            const category = btn.getAttribute('data-category');
+
+            btn.classList.remove('bg-slate-900/60', 'border-slate-700');
+            btn.classList.add('bg-blue-600/30', 'border-blue-500');
+
+            playerTitle.textContent = title;
+            playerCategory.textContent = category;
+            audio.src = src;
+            audio.play();
+        }
+
+        // --- FUNGSI UPLOAD MANUAL KE DASHBOARD ---
+        function handleMediaUpload(event, categoryName, iconClass, colorClass) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileURL = URL.createObjectURL(file);
+            const fileName = file.name.replace(/\.[^/.]+$/, "");
+
+            document.getElementById('emptyDashboardText').classList.add('hidden');
+            const dashboardList = document.getElementById('dashboardTrackList');
+
+            const newBtn = document.createElement('button');
+            newBtn.className = `track-btn p-4 text-left bg-slate-900/60 hover:bg-slate-700/80 rounded-xl border border-slate-700 transition-colors text-slate-300 text-sm font-medium flex items-center justify-between shadow-sm`;
+            newBtn.setAttribute('data-src', fileURL);
+            newBtn.setAttribute('data-title', fileName);
+            newBtn.setAttribute('data-category', categoryName);
+            
+            newBtn.innerHTML = `
+                <div class="flex items-center gap-4 truncate">
+                    <div class="w-10 h-10 rounded-full bg-${colorClass}-900/50 flex items-center justify-center shrink-0">
+                        <i class="${iconClass} text-${colorClass}-400 text-lg"></i>
+                    </div>
+                    <div class="flex flex-col truncate">
+                        <span class="truncate text-white font-bold text-base mb-0.5">${fileName}</span>
+                        <span class="text-[10px] text-${colorClass}-400 uppercase tracking-wider">${categoryName}</span>
+                    </div>
+                </div>
+                <i class="fas fa-play-circle text-2xl text-slate-500 opacity-50"></i>
+            `;
+
+            const newIndex = trackBtns.length;
+            newBtn.addEventListener('click', () => {
+                loadAndPlayTrack(newIndex);
+            });
+
+            dashboardList.appendChild(newBtn);
+            trackBtns.push(newBtn);
+
+            event.target.value = ''; 
+            showDashboard();
+        }
+
+        document.getElementById('uploadCustomMusic').addEventListener('change', (e) => {
+            handleMediaUpload(e, 'Lagu & Musik', 'fas fa-music', 'emerald');
+        });
+
+        document.getElementById('uploadCustomVoice').addEventListener('change', (e) => {
+            handleMediaUpload(e, 'Sirine & Pengumuman', 'fas fa-bullhorn', 'amber');
+        });
+
+        // --- PLAYER CONTROLS ---
+        function stopAudio() {
+            audio.pause(); 
+            audio.currentTime = 0; 
+            updateUIonPause();
+            if (!isTimerRunning) {
+                playerStatus.innerHTML = '<i class="fas fa-lock mr-1"></i> Terkunci (Nyalakan Timer Dahulu)';
+            } else {
+                playerStatus.innerHTML = '<i class="fas fa-stop-circle mr-1"></i> Berhenti';
+            }
+            playerStatus.className = 'text-xs font-bold text-red-400 uppercase tracking-widest mb-2';
+        }
+
+        function updateUIonPlay() {
+            playIcon.classList.replace('fa-play', 'fa-pause');
+            vinylIcon.classList.remove('spin-paused'); 
+            vinylIcon.classList.add('text-blue-500');
+            playerStatus.innerHTML = '<i class="fas fa-volume-up mr-1"></i> Memutar Lagu';
+            playerStatus.className = 'text-xs font-bold text-emerald-400 uppercase tracking-widest mb-2 animate-pulse';
+        }
+
+        function updateUIonPause() {
+            playIcon.classList.replace('fa-pause', 'fa-play');
+            vinylIcon.classList.add('spin-paused'); 
+            vinylIcon.classList.remove('text-blue-500');
+            if (!isTimerRunning) {
+                playerStatus.innerHTML = '<i class="fas fa-lock mr-1"></i> Terkunci (Timer Dijeda/Mati)';
+                playerStatus.className = 'text-xs font-bold text-red-400 uppercase tracking-widest mb-2';
+            } else {
+                playerStatus.innerHTML = '<i class="fas fa-pause-circle mr-1"></i> Dijeda';
+                playerStatus.className = 'text-xs font-bold text-amber-400 uppercase tracking-widest mb-2';
+            }
+        }
+
+        playPauseBtn.addEventListener('click', () => {
+            if (!checkTimerGuard()) return;
+
+            if (!audio.src) { 
+                if(trackBtns.length > 0) loadAndPlayTrack(0); 
+                else alert("Daftar lagu masih kosong. Silakan tambah lagu terlebih dahulu.");
+                return; 
+            }
+            if (audio.paused) audio.play(); 
+            else audio.pause();
+        });
+
+        stopBtn.addEventListener('click', stopAudio);
+
+        document.getElementById('btnNext').addEventListener('click', () => {
+            if (!checkTimerGuard()) return;
+            if (trackBtns.length === 0) return;
+            let nextIndex = currentTrackIndex + 1; 
+            if (nextIndex >= trackBtns.length) nextIndex = 0; 
+            loadAndPlayTrack(nextIndex);
+        });
+
+        document.getElementById('btnPrev').addEventListener('click', () => {
+            if (!checkTimerGuard()) return;
+            if (trackBtns.length === 0) return;
+            let prevIndex = currentTrackIndex - 1; 
+            if (prevIndex < 0) prevIndex = trackBtns.length - 1; 
+            loadAndPlayTrack(prevIndex);
+        });
+
+        audio.addEventListener('play', updateUIonPlay);
+        audio.addEventListener('pause', updateUIonPause);
+        audio.addEventListener('ended', stopAudio);
+    </script>
+</body>
+</html>
